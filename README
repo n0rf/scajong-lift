@@ -1,0 +1,21 @@
+Scajong-Lift
+
+A simple view for the project Scajong (https://github.com/cry-inc/scajong) 
+written in scala programming languate with help of lift web framework.
+
+This view was written for a Scala course at the University of Applied
+Sciences in Constance in the fall of 2012.
+
+
+Dependency:
+
+The view does only work in combination with the Scajong project. Copy the
+Scajong .jar file build with sbt command 'sbt package' into the 'lib' folder.
+
+
+Usage:
+
+Make sure the sbt.bat is configured correct and run it from a command window.
+The sbt (http://www.scala-sbt.org/) version 0.12 is used and the project got tested with it. Edit and run
+sbt_debug.bat to make remote debugging possible.
+In sbt console run 'container:start' (sbt version 0.12) to run the webserver.
