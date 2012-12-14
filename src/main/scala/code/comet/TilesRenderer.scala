@@ -2,7 +2,6 @@ package code
 package comet
 
 import scajong.view.SetupSelectedNotification
-import scajong.model.TilesChangedNotification
 import scajong.Scajong
 import net.liftweb.http.CometListener
 import scajong.model.WonNotification
@@ -25,6 +24,18 @@ import scajong.view.AddNewScoreEntryNotification
 import scajong.view.ShowCreateGameMenuNotification
 import scajong.view.ShowScoresMenuNotification
 import scajong.view.ShowScoresNotification
+import scajong.model.TileRemovedNotification
+import scajong.view.RequestHintNotification
+import scajong.view.RequestMoveablesNotification
+import scajong.view.RequestMoveablesNotification
+import scajong.model.StartHintNotification
+import scajong.model.TilePair
+import scajong.model.StopHintNotification
+import scajong.model.StopHintNotification
+import scajong.model.StartMoveablesNotification
+import scajong.model.StartMoveablesNotification
+import scajong.model.StartMoveablesNotification
+import scajong.model.StopMoveablesNotification
 
 
 /**
@@ -32,7 +43,7 @@ import scajong.view.ShowScoresNotification
  * by this component.  When the component changes on the server
  * the changes are automatically reflected in the browser.
  */
-class TilesRenderer extends CometActor with CometListener with View with SimpleSubscriber {
+class TilesRenderer extends CometActor with CometListener with View {
 
   Scajong.game.addSubscriber(this)
   Scajong.controller.attachView(this)
@@ -73,6 +84,14 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
     case command: Setup => {
       println("Setup command: " + command)
       sendNotification(new SetupSelectedNotification(command))
+    }
+    case command: RequestHintNotification => {
+      println("Request hint command: " + command)
+      sendNotification(new RequestHintNotification)
+    }
+    case command: RequestMoveablesNotification => {
+      println("Request moveables command: " + command)
+      sendNotification(new RequestMoveablesNotification)
     }
     case command: AddNewScoreEntryNotification => {
       println("Add new score command: " + command)
@@ -126,15 +145,15 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
       notification match {
         case n: CreatedGameNotification => {
           println("CREATED GAME Notification")
-          showTiles
+          showTiles()
         }
-        case n: TilesChangedNotification => {
-          println("TILE CHANGED Notification")
-          showTiles
+        case n: TileRemovedNotification => {
+          println("TILE REMOVED Notification")
+          showTiles()
         }
         case n: SelectedTileNotification =>  {
           println("TILE CLICKED Notification: " + n.tile)
-          showTiles
+          showTiles()
         }
         case n: WonNotification => {
           println("WON Notification: " + n.setup + " " + n.ms + " " + n.inScoreBoard)
@@ -165,6 +184,22 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
         case ShowScoresNotification(setup) => {
           println("Show Scores Notification")
           showScores(setup)
+        }
+        case StartHintNotification(tiles) => {
+          println("Start Hint Notification")
+          showTiles(tiles)
+        }
+        case StopHintNotification() => {
+          println("Stop Hint Notification")
+          showTiles()
+        }
+        case StartMoveablesNotification() => {
+          println("Start Moveable Notification")
+          showTiles()
+        }
+        case StopMoveablesNotification() => {
+          println("Stop Moveable Notification")
+          showTiles()
         }
         case _ => {
           println("unknown notification: " + notification)
@@ -244,7 +279,7 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
     } </ul></div>
   }
   
-  def showTiles = {
+  def showTiles(hintTiles:TilePair = null) = {
     val tiles = Scajong.game.sortedTiles
     println("Tiles: " + tiles.size)
 
@@ -254,11 +289,18 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
         <div onclick={ SHtml.ajaxCall(id.toString, handleTileClick _)._2.toJsCmd } style={ "margin-top:20px; background-image:url('/tiles/tile.png'); position:absolute; z-index:" + { tile.z } + "; top:" + { tile.y * cellHeight - tile.z * tileOffset } + "px; left:" + { tile.x * cellWidth } + "px; " }>
           <img src={ "/tiles/" + { tile.tileType.name } + ".png" }/>
           {
-            if (!Scajong.game.canMove(tile)) {
-              <img src="/tiles/disabled.png" style={ "position: absolute; top:0px; left:0px;" }/>
-            }
-            if (tile == Scajong.game.selected) {
-              <img src="/tiles/selected.png" style={ "position: absolute; top:0px; left:0px;" }/>
+            if (null != hintTiles) {
+              if (hintTiles.tile1 == tile || hintTiles.tile2 == tile) {
+                // show as hint (overlay with hint image)
+                <img src="/tiles/hint.png" style={ "position: absolute; top:0px; left:0px;" }/>
+              }
+            } else {
+	            if (!Scajong.game.canMove(tile)) {
+	              <img src="/tiles/disabled.png" style={ "position: absolute; top:0px; left:0px;" }/>
+	            }
+	            if (tile == Scajong.game.selected) {
+	              <img src="/tiles/selected.png" style={ "position: absolute; top:0px; left:0px;" }/>
+	            }
             }
           }
         </div>
