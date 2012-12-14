@@ -12,7 +12,7 @@ import scajong.view.ShowScoresNotification
 import scajong.view.ShowScoresMenuNotification
 import scajong.model.ScoreEntry
 import scajong.Scajong
-import scajong.view.AddNewScoreEntry
+import scajong.view.AddNewScoreEntryNotification
 
 /**
  * A singleton that provides communication features to all clients.
@@ -32,9 +32,9 @@ object ScajongServer extends LiftActor with ListenerManager {
   def createUpdate = update
   
   override def lowPriority = {
-    case s: SetupSelectedNotification => {
-      println("ScajongServer: lowPriority SetupSelectedNotification: " + s.setup)
-      doUpdate(s.setup)
+    case SetupSelectedNotification(setup) => {
+      println("ScajongServer: lowPriority SetupSelectedNotification: " + setup)
+      doUpdate(setup)
     }
     case s: Tile => {
       println("ScajongServer: lowPriority Tile selection: " + s)
@@ -52,7 +52,7 @@ object ScajongServer extends LiftActor with ListenerManager {
       println("ScajongServer: lowPriority ShowScoresNotification: " + s.setup)
       doUpdate(s)
     }
-    case s: AddNewScoreEntry => {
+    case s: AddNewScoreEntryNotification => {
       println("ScajongServer: lowPriority Score Entry add: " + s)
       doUpdate(s)
     }
