@@ -251,7 +251,7 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
     <div class="tiles">{
       for (tile <- tiles) yield {
         val id = Scajong.game.calcTileIndex(tile);
-        <div onclick={ SHtml.ajaxCall(id.toString, handleTileClick _)._2.toJsCmd } style={ "background-image:url('/tiles/tile.png'); position:absolute; z-index:" + { tile.z } + "; top:" + { tile.y * cellHeight - tile.z * tileOffset } + "px; left:" + { tile.x * cellWidth } + "px; " }>
+        <div onclick={ SHtml.ajaxCall(id.toString, handleTileClick _)._2.toJsCmd } style={ "margin-top:20px; background-image:url('/tiles/tile.png'); position:absolute; z-index:" + { tile.z } + "; top:" + { tile.y * cellHeight - tile.z * tileOffset } + "px; left:" + { tile.x * cellWidth } + "px; " }>
           <img src={ "/tiles/" + { tile.tileType.name } + ".png" }/>
           {
             if (!Scajong.game.canMove(tile)) {
