@@ -13,6 +13,8 @@ import scajong.view.ShowScoresMenuNotification
 import scajong.model.ScoreEntry
 import scajong.Scajong
 import scajong.view.AddNewScoreEntryNotification
+import scajong.view.RequestMoveablesNotification
+import scajong.view.RequestHintNotification
 
 /**
  * A singleton that provides communication features to all clients.
@@ -54,6 +56,14 @@ object ScajongServer extends LiftActor with ListenerManager {
     }
     case s: AddNewScoreEntryNotification => {
       println("ScajongServer: lowPriority Score Entry add: " + s)
+      doUpdate(s)
+    }
+    case s: RequestMoveablesNotification => {
+      println("ScajongServer: lowPriority RequestMoveablesNotification: " + s)
+      doUpdate(s)
+    }
+    case s: RequestHintNotification => {
+      println("ScajongServer: lowPriority RequestHintNotification: " + s)
       doUpdate(s)
     }
   }
