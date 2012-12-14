@@ -10,6 +10,9 @@ import scajong.model.Setup
 import scajong.view.ShowCreateGameMenuNotification
 import scajong.view.ShowScoresNotification
 import scajong.view.ShowScoresMenuNotification
+import scajong.model.ScoreEntry
+import scajong.Scajong
+import scajong.view.AddNewScoreEntry
 
 /**
  * A singleton that provides communication features to all clients.
@@ -28,36 +31,35 @@ object ScajongServer extends LiftActor with ListenerManager {
    */
   def createUpdate = update
   
-  def showCreateGameMenu = {
-    println("showCreateGameMenu")
-    update = new ShowCreateGameMenuNotification
-    updateListeners
-  }
-  
-  def showScoresMenu = {
-    println("update showScoresMenu")
-    update = new ShowScoresMenuNotification
-    updateListeners
-  }
-  
-  def showScores(setup:Setup) = {
-    println("showScores")
-    update = new ShowScoresNotification(setup)
-    updateListeners
-  }
-  
   override def lowPriority = {
     case s: SetupSelectedNotification => {
       println("ScajongServer: lowPriority SetupSelectedNotification: " + s.setup)
-      //setup = s.setup
-      update = s.setup
-      updateListeners
+      doUpdate(s.setup)
     }
     case s: Tile => {
       println("ScajongServer: lowPriority Tile selection: " + s)
-      //tile = s
-      update = s
-      updateListeners
+      doUpdate(s)
     }
+    case s: ShowCreateGameMenuNotification => {
+      println("ScajongServer: lowPriority ShowCreateGameMenuNotification")
+      doUpdate(s)
+    }
+    case s: ShowScoresMenuNotification => {
+      println("ScajongServer: lowPriority ShowScoresMenuNotification")
+      doUpdate(s)
+    }
+    case s: ShowScoresNotification => {
+      println("ScajongServer: lowPriority ShowScoresNotification: " + s.setup)
+      doUpdate(s)
+    }
+    case s: AddNewScoreEntry => {
+      println("ScajongServer: lowPriority Score Entry add: " + s)
+      doUpdate(s)
+    }
+  }
+  
+  private def doUpdate(updateInfo:Any) = {
+    update = updateInfo
+    updateListeners
   }
 }
