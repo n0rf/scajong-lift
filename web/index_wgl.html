@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Scajong</title>
+        <script src="jquery.js"></script>
+        <script src="mousewheel.js"></script>
+        <script src="three.js"></script>
+        <script src="stats.js"></script>
+        <script type="text/javascript">
+            var showHint = false;
+            var showMoveables = false;
+            var lastId = 0;
+            var scorePosition = -1;
+            var field;
+            var setups;
+            var images = {};
+            var tileCounter = 0;
+            var numberOfAllTiles;
+            
+            // WebGL
+            var winWidth = 800;
+            var winHeight = 600;
+            var camera;
+            var renderer;
+            var projector;
+            var objects = [];
+            var textures = {};
+            var scene;
+            var stats;
+            var xScale = 15;
+            var yScale = 9;
+            var zScale = 10;
+            var angleSide = Math.PI/2;
+            var angleHeight = 1;
+            var radius = 400;
+            var oldX;
+            var oldY;
+            var startX;
+            var startY;
+                       
+            function initWebGl() {
+                camera = new THREE.PerspectiveCamera(50, winWidth/winHeight, 1, 1000);
+                projector = new THREE.Projector();
+                renderer = new THREE.WebGLRenderer({canvas:document.getElementById('field'), antialias:true});
+                renderer.setSize(winWidth, winHeight);
+                renderer.setClearColor(new THREE.Color(0xcccccc), 1);
+                renderer.shadowMapEnabled = true;
+                renderer.shadowMapSoft = true;
+                scene = new THREE.Scene();
+                stats = new Stats();
+                stats.domElement.style.position = 'absolute';
+                stats.domElement.style.top = '40px';
+                stats.domElement.style.left = '20px';
+                document.getElementById('fieldPanel').appendChild(stats.domElement);
+                render();
+            }
+
+            function setCamera() {
+                var cx = field['fieldwidth'] * xScale * 0.5;
+                var cy = field['fieldheight'] * zScale * 0.5;
+                camera.position.x = radius * Math.cos(angleSide) * Math.sin(angleHeight) + cx;
+                camera.position.z = radius * Math.sin(angleSide) * Math.sin(angleHeight) + cy;
+                camera.position.y = radius * Math.cos(angleHeight);
+                camera.lookAt(new THREE.Vector3(cx, 0, cy));
+            }
+            
+            function render() {
+                requestAnimationFrame(render);
+                renderer.render(scene, camera);
+                stats.update();
+            }
+            
+            function rebuild() {
+                scene = new THREE.Scene();
+                objects = [];
+
+                setCamera();
+                scene.add(camera);
+                
+                // Light
+                var light = new THREE.SpotLight(0xffffff);
+                var cx = field.fieldwidth * xScale * 0.5;
+                var cy = field.fieldheight * zScale * 0.5;
+                light.position.x = 0;
+                light.position.y = 600;
+                light.position.z = 0;
+                light.target.position.x = cx;
+                light.target.position.y = 0;
+                light.target.position.z = cy;
+                light.castShadow = true;
+                light.shadowDarkness = 0.5;
+                //light.shadowCameraVisible = true;
+                scene.add(light);
+                
+                // Table
+                var table = new THREE.CubeGeometry(field.fieldwidth * xScale * 2, yScale, field.fieldheight * zScale * 2);
+                var tableMesh = new THREE.Mesh(table, new THREE.MeshPhongMaterial({color: 0xffffff}));
+                tableMesh.position.x = cx;
+                tableMesh.position.z = cy;
+                tableMesh.position.y = -yScale;
+                tableMesh.castShadow = false;
+                tableMesh.receiveShadow = true;
+                scene.add(tableMesh);
+
+                // Tiles
+                var geometry = new THREE.CubeGeometry(field.tilewidth * xScale, field.tiledepth * yScale, field.tileheight * zScale);
+                $.each(field.tiles, function(i, item) {
+                    var c = 0xffffff;
+                    if (item.selected) {
+                        c = 0xFAB77D;
+                    } else if (showHint && item.hint) {
+                        c = 0xC9CCF5;
+                    } else if (showMoveables && !item.moveable) {
+                        c = 0x787878;
+                    }
+                    var topMat = new THREE.MeshPhongMaterial({map: textures[item.type], color: c, specular: 0x555555, shininess: 30});
+                    var sideMath = new THREE.MeshPhongMaterial({map: textures['texture'], color: c, specular: 0x555555, shininess: 30});
+                    var materials = [];
+                    for (var i=0; i<6; i++) {
+                        if (i == 2) materials.push(topMat);
+                        else materials.push(sideMath);
+                    }
+                    var tileMesh = new THREE.Mesh(geometry, new THREE.MeshFaceMaterial(materials)); //topMat); //
+                    tileMesh.position.x = xScale * item.x;
+                    tileMesh.position.z = zScale * item.y;
+                    tileMesh.position.y = yScale * item.z;
+                    tileMesh.tile = item;
+                    tileMesh.castShadow = true;
+                    tileMesh.receiveShadow = true;
+                    scene.add(tileMesh);
+                    objects.push(tileMesh);
+                    /*
+                    if (item.selected) {
+                        var markerMesh = new THREE.Mesh(geometry, new THREE.LineBasicMaterial({color: 0xff0000, wireframe: true, linewidth: 3.0}));
+                        markerMesh.position.x = xScale * item.x;
+                        markerMesh.position.z = zScale * item.y;
+                        markerMesh.position.y = yScale * item.z;
+                        scene.add(markerMesh);
+                    }*/
+                });
+            }
+            
+           function canvasClick(e) {
+                var x = e.pageX - $("#field").position().left;
+                var y = e.pageY - $("#field").position().top;
+                var vector = new THREE.Vector3((x / winWidth) * 2 - 1, -(y / winHeight) * 2 + 1, 0.5);
+                projector.unprojectVector(vector, camera);
+                var ray = new THREE.Ray(camera.position, vector.subSelf(camera.position).normalize());
+                var intersects = ray.intersectObjects(objects);
+                if (intersects.length > 0) {    
+                    var tile = intersects[0].object.tile;
+                    var url = '/action/select_' + tile.x + '_' + tile.y + '_' + tile.z;
+                    $.getJSON(url, processAction);
+                    updateField();
+                }
+            }
+
+            function mouseDown(e) {
+                $("#field").mousemove(mouseMove);
+                var x = e.pageX - this.offsetLeft;
+                var y = e.pageY - this.offsetTop;
+                oldX = x;
+                oldY = y;
+                startX = x;
+                startY = y;
+            }
+            
+            var animated = false;
+            function rotate() {
+                if (animated) {
+                    angleSide += 0.025;
+                    angleHeight += Math.sin(angleSide*0.5) * 0.003;
+                    setCamera();
+                    setTimeout(rotate, 20);
+                }
+            }
+            
+            function animate() {
+                animated = !animated;
+                rotate();
+            }
+            
+            function mouseMove(e) {
+                var x = e.pageX - this.offsetLeft;
+                var y = e.pageY - this.offsetTop;
+                var dx = x-oldX;
+                var dy = y-oldY;
+                
+                angleSide += dx * 0.005;
+                angleHeight -= dy * 0.005;
+                if (angleHeight < 0.1) angleHeight = 0.1;
+                if (angleHeight > 1.4) angleHeight = 1.4;
+                
+                oldX = x;
+                oldY = y;
+                setCamera();
+            }
+            
+            function mouseUp(e) {
+                $("#field").unbind('mousemove');
+                var x = e.pageX - $("#field").position().left;
+                var y = e.pageY - $("#field").position().top;
+
+                if (x == startX && y == startY) {
+                    canvasClick(e);
+                }
+            }
+           
+            function mouseWheel(e, delta) {
+                radius -= delta * 10;
+                setCamera();
+            }
+            
+            function selectPanel(name) {
+                var panels = new Array('fieldPanel', 'setupsPanel', 'scoresPanel', 'scorePanel', 'addScore');
+                for (var i=0; i<panels.length; i++) {
+                    var div = document.getElementById(panels[i]);
+                    if (panels[i] == name) {
+                        div.style.display = "inline";
+                    } else {
+                        div.style.display = "none";
+                    }
+                }
+            }
+            
+            function checkNotifications() {
+                $.getJSON('/notifications.json?wait='+lastId, processNotifications);
+            }
+            
+            function processNotifications(json) {
+                $.each(json['notifications'], function(i, item) {
+                    if (item.id > lastId) {
+                        //console.log("not: (" + item.id + ", " + item.name + ", " + item.param1 + ", " + item.param2 + ")");
+                        switch(item.name) {
+                            case 'NewGame':
+                                selectPanel('fieldPanel');
+                                updateField();
+                                break;
+                            case 'UpdateField':
+                                updateField();
+                                break;
+                            case 'ShowScore':
+                                selectPanel('scorePanel');
+                                loadScores(item.param1, item.param2);
+                                break;
+                            case 'AddScore':
+                                $('#addScoreButton').removeAttr('disabled');
+                                selectPanel('addScore');
+                                $('#nameInput').focus().select();
+                                break;
+                            case 'NoFurtherMoves':
+                                var result = confirm('No further moves possible. Scramble?');
+                                if (result == true) $.getJSON('/action/scramble', processAction);
+                                break;
+                        }
+                        lastId = item.id;
+                    }
+                });
+                setTimeout(checkNotifications, 100);
+            }
+            
+            function updateField() {
+                $.getJSON('/field.json', processFieldData);
+            }
+            
+            function processFieldData(json) {
+                field = json;
+                rebuild();
+            }
+            
+            function loadTiles() {
+                $.getJSON('/tiles.json', processTilesData);
+            }
+            
+            function processTilesData(json) {
+                var otherImages = new Array('texture');
+                numberOfAllTiles = json.types.length;
+                numberOfAllTiles += otherImages.length;
+                $.each(json.types, function(i, item) {
+                    images[item.name] = new Image();
+                    images[item.name].onload = imageLoaded;
+                    images[item.name].src = 'tiles/'  + item.name + '.png';
+                });
+                $.each(otherImages, function(i, item) {
+                    images[item] = new Image();
+                    images[item].onload = imageLoaded;
+                    images[item].src = 'tiles/'  + item + '.png';
+                });
+            }
+            
+            function imageLoaded() {
+                tileCounter++;
+                if (tileCounter == numberOfAllTiles) {
+                    $.each(images, function(key, item) {
+                        textures[key] = new THREE.Texture(blend(images['texture'], images[key]));
+                        textures[key].needsUpdate = true;
+                    });
+                    loadSetups();
+                }
+            }
+            
+            function blend(bg, top) {
+                var canvas = document.createElement('canvas');
+                canvas.width = bg.width;
+                canvas.height = bg.height;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(bg, 0, 0);
+                ctx.drawImage(top, 0, 0, bg.width, bg.height);
+                return canvas;
+            }
+            
+            function loadSetups() {
+                $.getJSON('/setups.json', processSetupsData);
+            }
+            
+            function processSetupsData(json) {
+                setups = json.setups;
+                checkNotifications();
+            }
+            
+            function loadScores(setup, position) {
+                if (position != "") scorePosition = parseInt(position);
+                else scorePosition = -1;
+                $.getJSON('/scores/' + setup + '.json', processScoresData);
+            }
+            
+            function processScoresData(json) {
+                var htmlText = '<table class="scoreTable"><tr><th colspan="3" class="nl">'
+                htmlText += '<img src="setups/' + json.id + '.png" /><br />' + json.name + '</th></tr>';
+                var pos = 1;
+                htmlText += '<tr><th class="pos">Position</th><th class="name">Name</th><th class="time">Time</th></tr>'
+                $.each(json['scores'], function(i, item) {
+                    var marked = (pos-1 == scorePosition) ? ' marked' : '';
+                    htmlText += '<tr class="' + (pos%2 == 0 ? 'even' : 'odd') + marked + '"><td>' + pos + '</td>';
+                    htmlText += '<td>' + item.name + '</td>';
+                    htmlText += '<td>' + (item.ms/1000) + ' sec</td></tr>';
+                    pos++;
+                });
+                htmlText += '</table>';
+                $('#scorePanel').html(htmlText);
+                scorePosition = -1;
+            }
+            
+            function processAction(json) {
+                //alert('done');
+            }
+            
+            function moveablesClick(e) {
+                showMoveables = true
+                rebuild();
+                setTimeout(function() { showMoveables = false; rebuild(); }, 5000);
+                var url = '/action/moveables';
+                $.getJSON(url, processAction);
+            }
+            
+            function hintClick(e) {
+                showHint = true
+                rebuild();
+                setTimeout(function() { showHint = false; rebuild(); }, 1000);
+                var url = '/action/hint';
+                $.getJSON(url, processAction);
+            }
+            
+            function loadScore(scoreIndex) {
+                selectPanel('scorePanel');
+                loadScores(setups[scoreIndex].id, "");
+            }
+            
+            function loadSetup(setupIndex) { 
+                var url = '/action/creategame_' + setups[setupIndex].id;
+                $.getJSON(url, processAction);
+            }
+            
+            function selectMenu(panelName, functionName) {
+                selectPanel(panelName); 
+                var htmlText = '<ul class="setupList">';
+                for (var i=0; i< setups.length; i++) {
+                    htmlText += '<li><a onclick="' + functionName + '(' + i + ');" href="#">';
+                    htmlText += '<img src="setups/' + setups[i].id + '.png" /><br />' + setups[i].name + '</a></li>';
+                }
+                htmlText += '</ul>';
+                $('#' + panelName).html(htmlText);
+            } 
+            
+            function selectSetup() {
+                selectMenu('setupsPanel', 'loadSetup');
+            }
+            
+            function selectScore() {
+                selectMenu('scoresPanel', 'loadScore');
+            }
+            
+            function sendScoreName() {
+                var name = $("#nameInput").val();
+                var url = '/action/addscore_' + name;
+                $.getJSON(url, processAction);
+            }
+            
+        </script>
+        <style type="text/css">
+            a { color: black; }
+            .setupList { font-family: Arial; font-size: 10pt; list-style-type: none; margin: 0px; padding: 0px; }
+            .setupList li { background-color: #efefef; margin: 10px; width: 400px; text-align: center; padding: 10px; }
+            .setupList li:hover {background-color: #F1F8E0;}
+            .scoreTable { margin-top: 20px; font-family: Arial; font-size: 10pt; width: 400px; text-align: left; }
+            .scoreTable th { background-color: #efefef; }
+            .nl { text-align: center; padding: 15px;}
+            .pos { width: 70px; }
+            .time { width: 100px; }
+            .even td { background-color: #F1F8E0; }
+            .odd td { background-color: white; }
+            .marked { color: red; font-weight: bold; }
+            
+        </style>
+    </head>
+    <body onload="initWebGl(); loadTiles();">
+        <div id="menu">
+            <button id="createGameButton" type="button">Create New Game</button>
+            <button id="showScoresButton" type="button">Show Highscores</button>
+        </div>
+        <div id="fieldPanel" style="display:none">
+            <canvas id="field"></canvas><br />
+            <button id="moveableButton" type="button">Show Moveables (+5 Seconds)</button>
+            <button id="hintButton" type="button">Show Hint (+15 Seconds)</button>
+            <button id="updateButton" type="button">Update</button>
+            <button id="animateButton" type="button">Animate</button>
+        </div>
+        <div id="setupsPanel" style="display:none">SETUPS</div>
+        <div id="scoresPanel" style="display:none">SCORES</div>
+        <div id="scorePanel" style="display:none">SCORE</div>
+        <div id="addScore" style="display:none">
+            <input type="text" id="nameInput" value="Anon" />
+            <button id="addScoreButton" type="button">Send</button>
+        </div>
+        <script type="text/javascript">
+            $("#createGameButton").click(selectSetup);
+            $("#showScoresButton").click(selectScore);
+            $("#moveableButton").click(moveablesClick);
+            $("#hintButton").click(hintClick);
+            $("#updateButton").click(updateField);
+            $("#animateButton").click(animate);
+            $('#field').bind('mousewheel', mouseWheel);
+            $("#field").mousedown(mouseDown);
+            $("body").mouseup(mouseUp);
+            $("#addScoreButton").click(sendScoreName);
+            $('#nameInput').keypress(function(e) {
+                if(e.which == 13) {
+                    $('#addScoreButton').focus().click();
+                    $('#addScoreButton').attr('disabled', 'disabled');
+                    return false;
+                }
+            });
+        </script>
+    </body>
+</html>
