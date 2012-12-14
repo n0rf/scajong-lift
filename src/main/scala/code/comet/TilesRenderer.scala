@@ -1,30 +1,31 @@
 package code
 package comet
 
-import code.snippet.TilesGridSnippet
-import net.liftweb.http.CometActor
-import net.liftweb.http.CometListener
-import scajong.Scajong
-import scajong.model.Setup
-import scajong.model.Tile
-import scajong.util.SimpleNotification
-import scajong.util.SimpleSubscriber
 import scajong.view.SetupSelectedNotification
-import scajong.view.TileClickedNotification
-import scajong.view.View
 import scajong.model.TilesChangedNotification
+import scajong.Scajong
+import net.liftweb.http.CometListener
 import scajong.model.WonNotification
+import scajong.model.Setup
 import net.liftweb.http.js.JsCmd
+import scajong.model.Tile
 import scajong.model.NewScoreBoardEntryNotification
+import scajong.util.SimpleNotification
 import scajong.model.ScrambledNotification
-import net.liftweb.http.SHtml
+import net.liftweb.http.CometActor
+import scajong.util.SimpleSubscriber
 import scajong.model.SelectedTileNotification
 import scajong.model.NoFurtherMovesNotification
 import scajong.model.CreatedGameNotification
+import scajong.view.View
+import scajong.view.TileClickedNotification
+import net.liftweb.http.SHtml
+import scajong.view.AddScoreNotification
+import scajong.view.AddNewScoreEntryNotification
 import scajong.view.ShowCreateGameMenuNotification
-import scajong.view.ShowCreateGameMenuNotification
-import scajong.view.ShowScoresNotification
 import scajong.view.ShowScoresMenuNotification
+import scajong.view.ShowScoresNotification
+
 
 /**
  * The screen real estate on the browser will be represented
@@ -38,31 +39,17 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
   
   override def autoClose = true
   
+  var wonNotification : WonNotification = null
+  
   var latestNotifications = List[SimpleNotification]()
   val cellWidth = 30;
   val cellHeight = 20;
   val tileOffset = 5;
   
-  override def processNotifications(sn:SimpleNotification) {
+  override def processNotification(sn:SimpleNotification) {
     println("processNotifications: " + sn)
-    //TilesGridSnippet.latestNotification = TilesGridSnippet.latestNotification ::: List(sn)
     latestNotifications = latestNotifications ::: List(sn)
     reRender
-//    sn match {
-//      case n: WonNotification => {
-//        if (n.inScoreBoard) {
-//          //addScoreNotification = n
-//          addNotification("AddScore")
-//        } else addNotification("ShowScore", n.setup.id)
-//      }
-//      case n:NoFurtherMovesNotification => addNotification("NoFurtherMoves")
-//      case n:TilesChangedNotification => addNotification("UpdateField")
-//      case n:ScrambledNotification => addNotification("UpdateField")
-//      case n:SelectedTileNotification => addNotification("UpdateField")
-//      case n:CreatedGameNotification => addNotification("NewGame")
-//      case n:NewScoreBoardEntryNotification => addNotification("ShowScore", n.setup.id, n.position.toString)
-//      case _ => // Nothing
-//    }
   }
   
   /**
@@ -79,17 +66,6 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
    * cause changes to be sent to the browser.
    */
   override def lowPriority = {
-    //case command: String => {
-      //println("String command: " + command)
-      //sendNotification(new TileClickedNotification(Scajong.game.tiles(command.toInt)))
-    //}
-//    case command: Int => {
-//      if (Scajong.game.tiles.contains(command)) {
-//        println("Int command: " + command)
-//        val tile = Scajong.game.tiles(command)
-//        sendNotification(new TileClickedNotification(tile))
-//      }
-//    }
     case command: Tile => {
       println("Tile command: " + command)
      	sendNotification(new TileClickedNotification(command))
@@ -97,6 +73,13 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
     case command: Setup => {
       println("Setup command: " + command)
       sendNotification(new SetupSelectedNotification(command))
+    }
+    case command: AddNewScoreEntryNotification => {
+      println("Add new score command: " + command)
+      if (null != wonNotification) {
+      	sendNotification(new AddScoreNotification(wonNotification.setup, command.name, wonNotification.ms))
+      	wonNotification = null
+      }
     }
     case command: ShowCreateGameMenuNotification => {
       println("Show create game menu command: " + command)
@@ -121,7 +104,7 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
 
   def handleTileClick(tileId: String) : JsCmd = { ScajongServer ! Scajong.game.tiles(tileId.toInt) }
   
-  def handleScoreClick(setupId: String) : JsCmd = { ScajongServer.showScores(Scajong.game.setupById(setupId)) }
+  def handleScoreClick(setupId: String) : JsCmd = { ScajongServer ! new ShowScoresNotification(Scajong.game.setupById(setupId)) /*ScajongServer.showScores(Scajong.game.setupById(setupId))*/ }
   
   def render = {
     println("TilesRenderer RENDER: " + latestNotifications)
@@ -155,18 +138,7 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
         }
         case n: WonNotification => {
           println("WON Notification: " + n.setup + " " + n.ms + " " + n.inScoreBoard)
-          // TODO: show scoreboard
-          <div class="tiles">
-          	<h1>Your time: { n.ms / 1000.0 } seconds.</h1><br />
-          	{
-            	if (!n.inScoreBoard) {
-            	  <h2>Missed scoreboard entry</h2>
-            	} else {
-            	  // TODO: form!
-            	  <input id="" type="text" value="Anon"/><button class="">Speichern</button>
-            	}
-          	}
-          </div>
+          handleWonNotification(n)
         }
         case n: NoFurtherMovesNotification => {
           println("No Further Moves Notification")
@@ -175,12 +147,12 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
         }
         case n: ScrambledNotification => {
           println("Scrambled Notification")
-          // TODO: scramble... now what?
-          showTiles
+          // TODO: scramble
+          <div class="tiles"></div>
         }
-        case n: NewScoreBoardEntryNotification => {
-          println("New Score Board Entry Notification, pos: " + n.position)
-          showScores(n.setup, n.position)
+        case NewScoreBoardEntryNotification(setup, position) => {
+          println("New Score Board Entry Notification, pos: " + position)
+          showScores(setup, position)
         }
         case n: ShowCreateGameMenuNotification => {
           println("Show Setups Notification")
@@ -190,9 +162,9 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
           println("Show Scores Menu Notification")
           showScoresMenu
         }
-        case n: ShowScoresNotification => {
+        case ShowScoresNotification(setup) => {
           println("Show Scores Notification")
-          showScores(n.setup)
+          showScores(setup)
         }
         case _ => {
           println("unknown notification: " + notification)
@@ -223,17 +195,19 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
   def showScores(setup:Setup, marked:Int = 0) = {
     val scores = Scajong.game.scores.getScores(setup)
     println("Scores: " + scores.size)
-    <div class="tiles"><table class="scoreTable"><tr>
-    														<th colspan="3" class="nl">
-    															<img src={ "/setups/" + { setup.id } + ".png" }/>
-    															<br />{ setup.id }
-    														</th>
-    													</tr>
-    													<tr>
-    														<th class="pos">Position</th>
-    														<th class="name">Name</th>
-    														<th class="time">Time</th>
-    													</tr>{
+    <div class="tiles">
+    	<table class="scoreTable">
+    	<tr>
+    		<th colspan="3" class="nl">
+    			<img src={ "/setups/" + { setup.id } + ".png" }/>
+    			<br />{ setup.id }
+    		</th>
+    	</tr>
+    	<tr>
+    		<th class="pos">Position</th>
+    		<th class="name">Name</th>
+    		<th class="time">Time</th>
+    	</tr>{
     	var pos = 0
     	var markedClass = ""
     	for (i <- 0 until scores.size) yield {
@@ -290,5 +264,23 @@ class TilesRenderer extends CometActor with CometListener with View with SimpleS
         </div>
       }
     }</div>
+  }
+  
+  def handleWonNotification(n:WonNotification) = {
+    // store notification for add score action
+    wonNotification = n
+    <div class="tiles">
+    	<h1>Your time: { n.ms / 1000.0 } seconds.</h1><br />
+      {
+      	if (!n.inScoreBoard) {
+      	  <h2>Missed scoreboard entry</h2>
+      	} else {
+      	  <form class="lift:form.ajax">
+      			<input class="lift:MenuSnippet.addScoreEntry" id="entry_name" value="" />
+      			<input type="submit" value="Save"/>
+      		</form>
+      	}
+    	}
+    </div>
   }
 }
