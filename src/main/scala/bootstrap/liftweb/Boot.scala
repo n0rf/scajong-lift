@@ -20,8 +20,20 @@ class Boot {
     // where to search snippet
     LiftRules.addToPackages("code")
 
+//    LiftRules.jsArtifacts = net.liftweb.http.js.jquery.JQueryArtifacts
+//
+//    //Show the spinny image when an Ajax call starts
+//    LiftRules.ajaxStart =
+//      Full(() => LiftRules.jsArtifacts.show("ajax-loader").cmd)
+//    
+//    // Make the spinny image go away when it ends
+//    LiftRules.ajaxEnd =
+//      Full(() => LiftRules.jsArtifacts.hide("ajax-loader").cmd)
+
     // Force the request to be UTF-8
     LiftRules.early.append(_.setCharacterEncoding("UTF-8"))
+
+    //LiftRules.dispatch.append(RootController)
 
     // Use HTML5 for rendering
     LiftRules.htmlProperties.default.set((r: Req) =>
