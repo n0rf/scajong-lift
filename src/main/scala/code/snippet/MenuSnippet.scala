@@ -10,20 +10,17 @@ import scajong.view.View
 import code.comet.TilesRenderer
 import code.comet.TilesRenderer
 import code.comet.ScajongServer
-import scajong.view.HintNotification
-import scajong.view.MoveablesNotification
 import net.liftweb.http.js.JsCmds.SetValById
 import scajong.model.ScoreEntry
 import scajong.view.ShowCreateGameMenuNotification
 import scajong.view.AddNewScoreEntryNotification
 import scajong.view.ShowScoresMenuNotification
+import scajong.view.RequestMoveablesNotification
+import scajong.view.RequestHintNotification
+import scajong.util.SimpleNotification
 
-class MenuSnippet extends View {
-
-  Scajong.controller.attachView(this)
-
-  override def autoClose = true
-
+class MenuSnippet {
+  
   def createGame = "#createButton [onclick]" #> SHtml.ajaxInvoke(() => {
     ScajongServer ! new ShowCreateGameMenuNotification
   })
@@ -33,11 +30,11 @@ class MenuSnippet extends View {
   })
 
   def showMoveables = "#moveablesButton [onclick]" #> SHtml.ajaxInvoke(() => {
-    sendNotification(new MoveablesNotification)
+    ScajongServer ! new RequestMoveablesNotification
   })
 
   def showHint = "#hintButton [onclick]" #> SHtml.ajaxInvoke(() => {
-    sendNotification(new HintNotification)
+    ScajongServer ! new RequestHintNotification
   })
 
   def addScoreEntry = SHtml.onSubmit(name => {
