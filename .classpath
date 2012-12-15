@@ -21,7 +21,6 @@
 	<classpathentry kind="lib" path="C:/Users/Andreas/.ivy2/cache/javax.mail/mail/jars/mail-1.4.4.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Andreas/.ivy2/cache/javax.activation/activation/jars/activation-1.1.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Andreas/.ivy2/cache/commons-fileupload/commons-fileupload/jars/commons-fileupload-1.2.2.jar"/>
-	<classpathentry kind="lib" path="E:/Studium/Master/Moderne Programmiersprachen/eclipse/workspace/scajong/libs/nu.validator.htmlparser/htmlparser/bundles/htmlparser-1.4.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Andreas/.ivy2/cache/commons-httpclient/commons-httpclient/jars/commons-httpclient-3.1.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Andreas/.ivy2/cache/commons-logging/commons-logging/jars/commons-logging-1.0.4.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Andreas/.ivy2/cache/ch.qos.logback/logback-core/jars/logback-core-1.0.6.jar"/>
