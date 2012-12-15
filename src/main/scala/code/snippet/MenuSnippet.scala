@@ -12,12 +12,12 @@ import code.comet.TilesRenderer
 import code.comet.ScajongServer
 import net.liftweb.http.js.JsCmds.SetValById
 import scajong.model.ScoreEntry
-import scajong.view.ShowCreateGameMenuNotification
-import scajong.view.AddNewScoreEntryNotification
-import scajong.view.ShowScoresMenuNotification
-import scajong.view.RequestMoveablesNotification
-import scajong.view.RequestHintNotification
+import main.scala.code.lib.ShowScoresMenuNotification
+import main.scala.code.lib.RequestMoveablesNotification
+import main.scala.code.lib.RequestHintNotification
+import main.scala.code.lib.AddNewScoreEntryNotification
 import scajong.util.SimpleNotification
+import main.scala.code.lib.ShowCreateGameMenuNotification
 
 class MenuSnippet {
   

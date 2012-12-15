@@ -5,16 +5,11 @@ import net.liftweb._
 import http._
 import actor._
 import scajong.model.Tile
-import scajong.view.SetupSelectedNotification
 import scajong.model.Setup
-import scajong.view.ShowCreateGameMenuNotification
-import scajong.view.ShowScoresNotification
-import scajong.view.ShowScoresMenuNotification
 import scajong.model.ScoreEntry
 import scajong.Scajong
-import scajong.view.AddNewScoreEntryNotification
-import scajong.view.RequestMoveablesNotification
-import scajong.view.RequestHintNotification
+import scajong.model.CreatedGameNotification
+import main.scala.code.lib._
 
 /**
  * A singleton that provides communication features to all clients.
@@ -34,14 +29,18 @@ object ScajongServer extends LiftActor with ListenerManager {
   def createUpdate = update
   
   override def lowPriority = {
-    case SetupSelectedNotification(setup) => {
-      println("ScajongServer: lowPriority SetupSelectedNotification: " + setup)
-      doUpdate(setup)
-    }
-    case s: Tile => {
-      println("ScajongServer: lowPriority Tile selection: " + s)
+//    case SetupSelectedNotification (setup) => {
+//      println("ScajongServer: lowPriority SetupSelectedNotification: " + setup)
+//      doUpdate(setup)
+//    }
+    case s: CreatedGameNotification => {
+      println("ScajongServer: lowPriority CreatedGameNotification: " + s)
       doUpdate(s)
     }
+//    case s: Tile => {
+//      println("ScajongServer: lowPriority Tile selection: " + s)
+//      doUpdate(s)
+//    }
     case s: ShowCreateGameMenuNotification => {
       println("ScajongServer: lowPriority ShowCreateGameMenuNotification")
       doUpdate(s)
