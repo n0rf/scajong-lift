@@ -30,7 +30,7 @@ import scajong.model.StartHintNotification
  * by this component.  When the component changes on the server
  * the changes are automatically reflected in the browser.
  */
-class TilesRenderer extends CometActor with CometListener with View {
+class TilesRenderer extends CometActor with CometListener {
 
   private var fieldTiles : List[Tile] = null
   private var selectedTile : Tile = null
@@ -38,23 +38,15 @@ class TilesRenderer extends CometActor with CometListener with View {
   private var showMoveables : Boolean = false
   
   private val controller : Controller = Scajong.controller
-  Scajong.controller.attachView(this)
+//  Scajong.controller.attachView(this)
   
-  override def autoClose = true
-  
-  var wonNotification : WonNotification = null
-  
-  var latestNotifications = List[SimpleNotification]()
   val cellWidth = 30;
   val cellHeight = 20;
   val tileOffset = 5;
   
-  override def processNotification(sn:SimpleNotification) {
-    println("processNotifications: " + sn)
-    latestNotifications = latestNotifications ::: List(sn)
-    reRender
-  }
-  
+  private var wonNotification : WonNotification = null
+  private var latestNotifications = List[SimpleNotification]()
+
   /**
    * When the component is instantiated, register as
    * a listener with the ScajongServer
@@ -69,46 +61,16 @@ class TilesRenderer extends CometActor with CometListener with View {
    * cause changes to be sent to the browser.
    */
   override def lowPriority = {
-    case command: Tile => {
-      println("Tile command: " + command)
-      controller.selectTile(command)
-     	//sendNotification(new TileClickedNotification(command))
-    }
-    case command: Setup => {
-      println("Setup command: " + command)
-      controller.startNewGame(command)
-      //sendNotification(new SetupSelectedNotification(command))
-    }
-    case command: RequestHintNotification => {
-      println("Request hint command: " + command)
-      controller.requestHint
-      //sendNotification(new RequestHintNotification)
-    }
-    case command: RequestMoveablesNotification => {
-      println("Request moveables command: " + command)
-      controller.requestMoveables
-      //sendNotification(new RequestMoveablesNotification)
-    }
-    case command: AddNewScoreEntryNotification => {
-      println("Add new score command: " + command)
+    case AddNewScoreEntryNotification(name) => {
+      println("Add new score command: " + name)
       if (null != wonNotification) {
-        controller.addScore(wonNotification.setup, command.name, wonNotification.ms)
+        controller.addScore(wonNotification.setup, name, wonNotification.ms)
       	//sendNotification(new AddScoreNotification(wonNotification.setup, command.name, wonNotification.ms))
       	wonNotification = null
       }
     }
-    case command: ShowCreateGameMenuNotification => {
-      println("Show create game menu command: " + command)
-      latestNotifications = latestNotifications ::: List(command)
-      reRender
-    }
-    case command: ShowScoresMenuNotification => {
-      println("Show score menu command: " + command)
-      latestNotifications = latestNotifications ::: List(command)
-      reRender
-    }
-    case command: ShowScoresNotification => {
-      println("Show score menu command: " + command)
+    // all other notifications from ScajongServer have to be handled while rerendering
+    case command : SimpleNotification => {
       latestNotifications = latestNotifications ::: List(command)
       reRender
     }
@@ -219,8 +181,6 @@ class TilesRenderer extends CometActor with CometListener with View {
 
   def showSetups = {
     val setups = controller.setups
-    println("Setups: " + setups.size)
-
     // show menu of setups
     <div class="tiles">
     	<ul class="setupList"><li class="menuHeader">Start a new game</li>{
@@ -237,7 +197,7 @@ class TilesRenderer extends CometActor with CometListener with View {
   
   def showScores(setup:Setup, marked:Int = 0) = {
     val scores = controller.scores.getScores(setup)
-    println("Scores: " + scores.size)
+    // show scores of a setup
     <div class="tiles">
     	<table class="scoreTable">
     	<tr>
@@ -271,8 +231,6 @@ class TilesRenderer extends CometActor with CometListener with View {
   
   def showScoresMenu = {
     val setups = controller.setups
-    println("Scores-Setups: " + setups.size)
-
     // show menu of scores
     <div class="tiles">
     	<ul class="setupList"><li class="menuHeader">Show scores</li>{
