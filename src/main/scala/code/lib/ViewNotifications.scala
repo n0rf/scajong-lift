@@ -12,3 +12,4 @@ case class RequestMoveablesNotification() extends SimpleNotification
 
 // internal notification used to add a new score entry and send a notification about this entry to the controller
 case class AddNewScoreEntryNotification(val name:String) extends SimpleNotification
+case class BackToGameNotification() extends SimpleNotification

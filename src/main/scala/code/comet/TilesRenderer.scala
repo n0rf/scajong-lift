@@ -25,6 +25,7 @@ import scajong.model.TilesRemovedNotification
 import scajong.model.TileSelectedNotification
 import main.scala.code.lib._
 import scajong.model.StartHintNotification
+import code.snippet.MenuSnippet
 /**
  * The screen real estate on the browser will be represented
  * by this component.  When the component changes on the server
@@ -74,9 +75,13 @@ class TilesRenderer extends CometActor with CometListener {
       latestNotifications = latestNotifications ::: List(command)
       reRender
     }
+    case command: Boolean => {
+      // do nothing
+    }
   }
   
   def handleSetupClick(setupId: String) : JsCmd = {
+    MenuSnippet.showBackToGameButton = false
     controller.startNewGame(controller.setupById(setupId))
   }
 
@@ -169,6 +174,10 @@ class TilesRenderer extends CometActor with CometListener {
         case StopMoveablesNotification() => {
           println("Stop Moveable Notification")
           showMoveables = false
+          showTiles()
+        }
+        case BackToGameNotification() => {
+          println("Back To Game Notification")
           showTiles()
         }
         case _ => {

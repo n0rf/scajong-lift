@@ -18,27 +18,66 @@ import main.scala.code.lib.RequestHintNotification
 import main.scala.code.lib.AddNewScoreEntryNotification
 import scajong.util.SimpleNotification
 import main.scala.code.lib.ShowCreateGameMenuNotification
+import main.scala.code.lib.BackToGameNotification
 
-class MenuSnippet {
+/**
+ * Snippet class for menu actions.
+ */
+object MenuSnippet {
   
+  var showBackToGameButton : Boolean = false
+  
+  /**
+   * CreateGame snippet renders create game button with ajax function. 
+   */
   def createGame = "#createButton [onclick]" #> SHtml.ajaxInvoke(() => {
+    if (Scajong.controller.tiles.size != 0) {
+    	showBackToGameButton = true
+    }
     ScajongServer ! new ShowCreateGameMenuNotification
   })
 
+  /**
+   * ShowScoresMenu snippet renders button with ajax function to show scores menu.
+   */
   def showScoresMenu = "#showScoresMenuButton [onclick]" #> SHtml.ajaxInvoke(() => {
+    if (Scajong.controller.tiles.size != 0) {
+    	showBackToGameButton = true
+    }
     ScajongServer ! new ShowScoresMenuNotification
   })
 
+  /**
+   * ShowMoveables snippet renders button with ajax function to show moveable tiles. 
+   */
   def showMoveables = "#moveablesButton [onclick]" #> SHtml.ajaxInvoke(() => {
-    ScajongServer ! new RequestMoveablesNotification
+    if (!showBackToGameButton && Scajong.controller.tiles.size != 0) {
+    	ScajongServer ! new RequestMoveablesNotification
+    }
   })
 
+  /**
+   * ShowHint snippet renders button with ajax function to show hint tiles. 
+   */
   def showHint = "#hintButton [onclick]" #> SHtml.ajaxInvoke(() => {
-    ScajongServer ! new RequestHintNotification
+    if (!showBackToGameButton && Scajong.controller.tiles.size != 0) {
+    	ScajongServer ! new RequestHintNotification
+    }
   })
 
+  /**
+   * AddScoreEntry snippet for add a new score entry form.
+   */
   def addScoreEntry = SHtml.onSubmit(name => {
     ScajongServer ! new AddNewScoreEntryNotification(name)
     SetValById("entry_name", "")
+  })
+  
+  /**
+   * BackToGame snippet for add a new score entry form.
+   */
+  def backToGame = "#backToGameButton [onclick]" #> SHtml.ajaxInvoke(() => {
+    showBackToGameButton = false
+    ScajongServer ! new BackToGameNotification
   })
 }
