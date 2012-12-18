@@ -3,9 +3,8 @@ package comet
 
 import net.liftweb.http.CometActor
 import net.liftweb.http.CometListener
-import scajong.Scajong
 import code.snippet.MenuSnippet
-
+import scajong.Scajong
 /**
  * The screen real estate on the browser will be represented
  * by this component.  When the component changes on the server
@@ -17,7 +16,7 @@ class MenuRenderer extends CometActor with CometListener {
    * When the component is instantiated, register as
    * a listener with the ScajongServer
    */
-  def registerWith = ScajongServer
+  def registerWith = LiftViewServer
 
   /**
    * The CometActor is an Actor, so it processes messages.

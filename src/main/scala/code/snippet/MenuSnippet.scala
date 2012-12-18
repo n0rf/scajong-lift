@@ -5,11 +5,9 @@ import net.liftweb.http.SHtml
 import net.liftweb.http.js.JsCmd.unitToJsCmd
 import net.liftweb.util.Helpers.strToCssBindPromoter
 import scajong.Scajong
-import scajong.model.CreatedGameNotification
 import scajong.view.View
 import code.comet.TilesRenderer
-import code.comet.TilesRenderer
-import code.comet.ScajongServer
+import code.comet.LiftViewServer
 import net.liftweb.http.js.JsCmds.SetValById
 import scajong.model.ScoreEntry
 import main.scala.code.lib.ShowScoresMenuNotification
@@ -34,7 +32,7 @@ object MenuSnippet {
     if (Scajong.controller.tiles.size != 0) {
     	showBackToGameButton = true
     }
-    ScajongServer ! new ShowCreateGameMenuNotification
+    LiftViewServer ! new ShowCreateGameMenuNotification
   })
 
   /**
@@ -44,7 +42,7 @@ object MenuSnippet {
     if (Scajong.controller.tiles.size != 0) {
     	showBackToGameButton = true
     }
-    ScajongServer ! new ShowScoresMenuNotification
+    LiftViewServer ! new ShowScoresMenuNotification
   })
 
   /**
@@ -52,7 +50,7 @@ object MenuSnippet {
    */
   def showMoveables = "#moveablesButton [onclick]" #> SHtml.ajaxInvoke(() => {
     if (!showBackToGameButton && Scajong.controller.tiles.size != 0) {
-    	ScajongServer ! new RequestMoveablesNotification
+    	LiftViewServer ! new RequestMoveablesNotification
     }
   })
 
@@ -61,7 +59,7 @@ object MenuSnippet {
    */
   def showHint = "#hintButton [onclick]" #> SHtml.ajaxInvoke(() => {
     if (!showBackToGameButton && Scajong.controller.tiles.size != 0) {
-    	ScajongServer ! new RequestHintNotification
+    	LiftViewServer ! new RequestHintNotification
     }
   })
 
@@ -69,7 +67,7 @@ object MenuSnippet {
    * AddScoreEntry snippet for add a new score entry form.
    */
   def addScoreEntry = SHtml.onSubmit(name => {
-    ScajongServer ! new AddNewScoreEntryNotification(name)
+    LiftViewServer ! new AddNewScoreEntryNotification(name)
     SetValById("entry_name", "")
   })
   
@@ -78,6 +76,6 @@ object MenuSnippet {
    */
   def backToGame = "#backToGameButton [onclick]" #> SHtml.ajaxInvoke(() => {
     showBackToGameButton = false
-    ScajongServer ! new BackToGameNotification
+    LiftViewServer ! new BackToGameNotification
   })
 }

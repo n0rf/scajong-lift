@@ -8,10 +8,8 @@ import scajong.model.Tile
 import scajong.model.Setup
 import scajong.model.ScoreEntry
 import scajong.Scajong
-import scajong.model.CreatedGameNotification
 import main.scala.code.lib._
 import scajong.view.View
-import scajong.model.WonNotification
 import scajong.util.SimpleNotification
 
 /**
@@ -19,11 +17,12 @@ import scajong.util.SimpleNotification
  * It's an Actor so it's thread-safe because only one
  * message will be processed at once.
  */
-object ScajongServer extends LiftActor with ListenerManager with View {
+object LiftViewServer extends LiftActor with ListenerManager with View {
 
   private var update : Any = null
   
   Scajong.controller.attachView(this)
+  override def autoClose = true
   
   /**
    * When we update the listeners, what message do we send?

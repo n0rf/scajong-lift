@@ -3,29 +3,30 @@ package comet
 
 import scajong.Scajong
 import net.liftweb.http.CometListener
-import scajong.model.WonNotification
 import scajong.model.Setup
 import net.liftweb.http.js.JsCmd
 import scajong.model.Tile
-import scajong.model.NewScoreBoardEntryNotification
 import scajong.util.SimpleNotification
-import scajong.model.ScrambledNotification
 import net.liftweb.http.CometActor
 import scajong.util.SimpleSubscriber
-import scajong.model.NoFurtherMovesNotification
-import scajong.model.CreatedGameNotification
 import scajong.view.View
 import net.liftweb.http.SHtml
 import scajong.model.TilePair
-import scajong.model.StopHintNotification
-import scajong.model.StartMoveablesNotification
-import scajong.model.StopMoveablesNotification
 import scajong.controller.Controller
-import scajong.model.TilesRemovedNotification
-import scajong.model.TileSelectedNotification
 import main.scala.code.lib._
-import scajong.model.StartHintNotification
 import code.snippet.MenuSnippet
+import scajong.controller.WonNotification
+import scajong.controller.NewScoreBoardEntryNotification
+import scajong.controller.ScrambledNotification
+import scajong.controller.TilesRemovedNotification
+import scajong.controller.TileSelectedNotification
+import scajong.controller.NoFurtherMovesNotification
+import scajong.controller.StartHintNotification
+import scajong.controller.CreatedGameNotification
+import scajong.controller.StartMoveablesNotification
+import scajong.controller.StopHintNotification
+import scajong.controller.StopMoveablesNotification
+
 /**
  * The screen real estate on the browser will be represented
  * by this component.  When the component changes on the server
@@ -39,8 +40,7 @@ class TilesRenderer extends CometActor with CometListener {
   private var showMoveables : Boolean = false
   
   private val controller : Controller = Scajong.controller
-//  Scajong.controller.attachView(this)
-  
+
   val cellWidth = 30;
   val cellHeight = 20;
   val tileOffset = 5;
@@ -52,7 +52,7 @@ class TilesRenderer extends CometActor with CometListener {
    * When the component is instantiated, register as
    * a listener with the ScajongServer
    */
-  def registerWith = ScajongServer
+  def registerWith = LiftViewServer
 
   /**
    * The CometActor is an Actor, so it processes messages.
@@ -90,7 +90,7 @@ class TilesRenderer extends CometActor with CometListener {
   }
   
   def handleScoreClick(setupId: String) : JsCmd = { 
-    ScajongServer ! new ShowScoresNotification(controller.setupById(setupId)) 
+    LiftViewServer ! new ShowScoresNotification(controller.setupById(setupId)) 
   }
   
   def render = {
@@ -132,13 +132,12 @@ class TilesRenderer extends CometActor with CometListener {
         }
         case n: NoFurtherMovesNotification => {
           println("No Further Moves Notification")
-          // TODO: No further moves
+          // TODO: No further moves - ASK for scramble (show button!)
           <div class="tiles"></div>
         }
         case n: ScrambledNotification => {
           println("Scrambled Notification")
-          // TODO: scramble
-          <div class="tiles"></div>
+          showTiles()
         }
         case NewScoreBoardEntryNotification(setup, position) => {
           println("New Score Board Entry Notification, pos: " + position)
