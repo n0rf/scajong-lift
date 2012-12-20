@@ -48,6 +48,18 @@ object LiftViewServer extends LiftActor with ListenerManager with View {
       println("ScajongServer: lowPriority RequestMoveablesNotification: " + s)
       Scajong.controller.requestMoveables
     }
+    case StartNewGameNotification(setup) => {
+      println("ScajongServer: lowPriority StartNewGameNotification: " + setup)
+      Scajong.controller.startNewGame(setup)
+    }
+    case TileClickNotification(tile) => {
+      println("ScajongServer: lowPriority TileClickNotification: " + tile)
+      Scajong.controller.selectTile(tile)
+    }
+    case AddScoreNotification(setup, name, ms) => {
+      println("ScajongServer: lowPriority AddScoreNotification: Setup: " + setup + " - Name: " + name + " - ms: " + ms)
+      Scajong.controller.addScore(setup, name, ms)
+    }
     case s: SimpleNotification => {
       println("---------- ScajongServer: lowPriority: " + s)
       doUpdate(s)

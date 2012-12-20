@@ -65,8 +65,7 @@ class TilesRenderer extends CometActor with CometListener {
     case AddNewScoreEntryNotification(name) => {
       println("Add new score command: " + name)
       if (null != wonNotification) {
-        controller.addScore(wonNotification.setup, name, wonNotification.ms)
-      	//sendNotification(new AddScoreNotification(wonNotification.setup, command.name, wonNotification.ms))
+        LiftViewServer ! new AddScoreNotification(wonNotification.setup, name, wonNotification.ms)
       	wonNotification = null
       }
     }
@@ -82,11 +81,11 @@ class TilesRenderer extends CometActor with CometListener {
   
   def handleSetupClick(setupId: String) : JsCmd = {
     MenuSnippet.showBackToGameButton = false
-    controller.startNewGame(controller.setupById(setupId))
+    LiftViewServer ! new StartNewGameNotification(controller.setupById(setupId))
   }
 
   def handleTileClick(tileId: String) : JsCmd = {
-    controller.selectTile(controller.tiles(tileId.toInt))
+    LiftViewServer ! new TileClickNotification(controller.tiles(tileId.toInt))
   }
   
   def handleScoreClick(setupId: String) : JsCmd = { 
@@ -254,26 +253,25 @@ class TilesRenderer extends CometActor with CometListener {
   }
   
   def showTiles() = {
-    println("Tiles: " + fieldTiles.size)
-    var tileStr : String = ""
-
     <div class="tiles">{
-      for (tile <- fieldTiles) yield {
-        <div onclick={ SHtml.ajaxCall(controller.calcTileIndex(tile).toString, handleTileClick _)._2.toJsCmd } style={ "margin-top:20px; background-image:url('/tiles/tile.png'); position:absolute; z-index:" + { tile.z } + "; top:" + { tile.y * cellHeight - tile.z * tileOffset } + "px; left:" + { tile.x * cellWidth } + "px; " }>
+	  	for (tile <- fieldTiles) yield {
+	      <div onclick={ SHtml.ajaxCall(controller.calcTileIndex(tile).toString, handleTileClick _)._2.toJsCmd } 
+        		 style={ "margin-top:20px; background-image:url('/tiles/tile.png'); " +
+	      		 				 "position:absolute; z-index:" + { tile.z } + "; " +
+	      		 				 "top:" + { tile.y * cellHeight - tile.z * tileOffset } + "px; " +
+	      		 				 "left:" + { tile.x * cellWidth } + "px; " }>
           <img src={ "/tiles/" + { tile.tileType.name } + ".png" }/>
           {
-            
-            if (showMoveables && !controller.canMove(tile)) {
-              <img src="/tiles/disabled.png" style="position: absolute; top:0px; left:0px;" />
-            } else if (null != hintTiles && (hintTiles.tile1 == tile || hintTiles.tile2 == tile)) {
-	            // show as hint (overlay with hint image)
+	          if (showMoveables && !controller.canMove(tile)) {
+	            <img src="/tiles/disabled.png" style="position: absolute; top:0px; left:0px;" />
+	          } else if (null != hintTiles && (hintTiles.tile1 == tile || hintTiles.tile2 == tile)) {
 	          	<img src="/tiles/hint.png" style="position: absolute; top:0px; left:0px;" />
 	          } else if (tile == selectedTile) {
 	          	<img src="/tiles/selected.png" style="position: absolute; top:0px; left:0px;" />
 	          }
-          }
+	        }
         </div>
-      }
+	    }
     }</div>
   }
   
