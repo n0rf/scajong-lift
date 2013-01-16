@@ -27,7 +27,6 @@ class MenuRenderer extends CometActor with CometListener {
    */
   override def lowPriority = {
     case _ => {
-      println("MenuRenderer: lowPriority!")
       reRender
     }
   }
@@ -37,6 +36,7 @@ class MenuRenderer extends CometActor with CometListener {
     <div class="menu">
     	<button class="lift:MenuSnippet.createGame" id="createButton">Create New Game</button>
     	<button class="lift:MenuSnippet.showScoresMenu" id="showScoresMenuButton">Show Highscores</button>
+    	<button class="lift:MenuSnippet.scramble" id="scrambleButton">Scramble</button>
     	{
 	    	if (gameRunning) {
 	    	  if (!MenuSnippet.showBackToGameButton) {

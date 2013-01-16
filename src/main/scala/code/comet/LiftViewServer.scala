@@ -34,34 +34,30 @@ object LiftViewServer extends LiftActor with ListenerManager with View {
   
   
   override def processNotification(sn:SimpleNotification) {
-    println("processNotifications: " + sn)
     doUpdate(sn)
   }
   
   override def lowPriority = {
     // internal notifications:
     case s: RequestHintNotification => {
-      println("ScajongServer: lowPriority RequestHintNotification: " + s)
       Scajong.controller.requestHint
     }
     case s: RequestMoveablesNotification => {
-      println("ScajongServer: lowPriority RequestMoveablesNotification: " + s)
       Scajong.controller.requestMoveables
     }
     case StartNewGameNotification(setup) => {
-      println("ScajongServer: lowPriority StartNewGameNotification: " + setup)
       Scajong.controller.startNewGame(setup)
     }
     case TileClickNotification(tile) => {
-      println("ScajongServer: lowPriority TileClickNotification: " + tile)
       Scajong.controller.selectTile(tile)
     }
     case AddScoreNotification(setup, name, ms) => {
-      println("ScajongServer: lowPriority AddScoreNotification: Setup: " + setup + " - Name: " + name + " - ms: " + ms)
       Scajong.controller.addScore(setup, name, ms)
     }
+    case s: RequestScrambleNotification => {
+      Scajong.controller.scramble
+    }
     case s: SimpleNotification => {
-      println("---------- ScajongServer: lowPriority: " + s)
       doUpdate(s)
     }
   }

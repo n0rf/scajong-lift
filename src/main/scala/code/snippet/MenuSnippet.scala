@@ -17,6 +17,8 @@ import main.scala.code.lib.AddNewScoreEntryNotification
 import scajong.util.SimpleNotification
 import main.scala.code.lib.ShowCreateGameMenuNotification
 import main.scala.code.lib.BackToGameNotification
+import scajong.controller.ScrambledNotification
+import main.scala.code.lib.RequestScrambleNotification
 
 /**
  * Snippet class for menu actions.
@@ -43,6 +45,15 @@ object MenuSnippet {
     	showBackToGameButton = true
     }
     LiftViewServer ! new ShowScoresMenuNotification
+  })
+  
+  /**
+   * Scramble snippet renders button with ajax function to scramble the field.
+   */
+  def scramble = "#scrambleButton [onclick]" #> SHtml.ajaxInvoke(() => {
+    if (!showBackToGameButton && Scajong.controller.tiles.size != 0) {
+    	LiftViewServer ! new RequestScrambleNotification
+    }
   })
 
   /**

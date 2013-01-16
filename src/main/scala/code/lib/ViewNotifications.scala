@@ -13,6 +13,7 @@ case class BackToGameNotification() extends SimpleNotification
 // internal notifications handled in view server
 case class RequestHintNotification() extends SimpleNotification
 case class RequestMoveablesNotification() extends SimpleNotification
+case class RequestScrambleNotification() extends SimpleNotification
 case class StartNewGameNotification(setup:Setup) extends SimpleNotification
 case class TileClickNotification(tile:Tile) extends SimpleNotification
 case class AddScoreNotification(setup:Setup, name:String, ms:Int) extends SimpleNotification

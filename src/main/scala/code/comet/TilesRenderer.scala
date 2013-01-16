@@ -63,7 +63,6 @@ class TilesRenderer extends CometActor with CometListener {
    */
   override def lowPriority = {
     case AddNewScoreEntryNotification(name) => {
-      println("Add new score command: " + name)
       if (null != wonNotification) {
         LiftViewServer ! new AddScoreNotification(wonNotification.setup, name, wonNotification.ms)
       	wonNotification = null
@@ -93,13 +92,6 @@ class TilesRenderer extends CometActor with CometListener {
   }
   
   def render = {
-    println("TilesRenderer RENDER: " + latestNotifications)
-    
-    println("Current Notifications:")
-    for (sn <- latestNotifications) yield {
-      println("sn: " + sn)
-    }
-    
     var notification : SimpleNotification = null
     if (latestNotifications.size > 0) {
       notification = latestNotifications(0)
@@ -111,75 +103,58 @@ class TilesRenderer extends CometActor with CometListener {
     } else {
       notification match {
         case n: CreatedGameNotification => {
-          println("CREATED GAME Notification")
           fieldTiles = controller.sortedTiles
           showTiles()
         }
         case TilesRemovedNotification(tiles) => {
-          println("TILE REMOVED Notification")
           fieldTiles = fieldTiles diff List(tiles.tile1, tiles.tile2)
           showTiles()
         }
         case TileSelectedNotification(tile) =>  {
-          println("TILE CLICKED Notification: " + tile)
           selectedTile = tile
           showTiles()
         }
         case n: WonNotification => {
-          println("WON Notification: " + n.setup + " " + n.ms + " " + n.inScoreBoard)
           handleWonNotification(n)
         }
         case n: NoFurtherMovesNotification => {
-          println("No Further Moves Notification")
-          // TODO: No further moves - ASK for scramble (show button!)
-          <div class="tiles"></div>
+          showTiles(false)
         }
         case n: ScrambledNotification => {
-          println("Scrambled Notification")
           showTiles()
         }
         case NewScoreBoardEntryNotification(setup, position) => {
-          println("New Score Board Entry Notification, pos: " + position)
           showScores(setup, position)
         }
         case n: ShowCreateGameMenuNotification => {
-          println("Show Setups Notification")
           showSetups
         }
         case n: ShowScoresMenuNotification => {
-          println("Show Scores Menu Notification")
           showScoresMenu
         }
         case ShowScoresNotification(setup) => {
-          println("Show Scores Notification")
           showScores(setup)
         }
         case StartHintNotification(tiles) => {
-          println("Start Hint Notification")
           hintTiles = tiles
           showTiles()
         }
         case StopHintNotification() => {
-          println("Stop Hint Notification")
           hintTiles = null
           showTiles()
         }
         case StartMoveablesNotification() => {
-          println("Start Moveable Notification")
           showMoveables = true
           showTiles()
         }
         case StopMoveablesNotification() => {
-          println("Stop Moveable Notification")
           showMoveables = false
           showTiles()
         }
         case BackToGameNotification() => {
-          println("Back To Game Notification")
           showTiles()
         }
         case _ => {
-          println("unknown notification: " + notification)
           <div class="tiles"></div>
         }
       }
@@ -252,8 +227,11 @@ class TilesRenderer extends CometActor with CometListener {
     } </ul></div>
   }
   
-  def showTiles() = {
+  def showTiles(possibleMove:Boolean = true) = {
     <div class="tiles">{
+    	if (!possibleMove) {
+    	  <h2>Keine Z&uuml;ge m&uouml;glich - neu mischen!</h2>
+    	}
 	  	for (tile <- fieldTiles) yield {
 	      <div onclick={ SHtml.ajaxCall(controller.calcTileIndex(tile).toString, handleTileClick _)._2.toJsCmd } 
         		 style={ "margin-top:20px; background-image:url('/tiles/tile.png'); " +
