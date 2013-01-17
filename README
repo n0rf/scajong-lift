@@ -16,6 +16,8 @@ Scajong .jar file build with sbt command 'sbt package' into the 'lib' folder.
 Usage:
 
 Make sure the sbt.bat is configured correct and run it from a command window.
-The sbt (http://www.scala-sbt.org/) version 0.12 is used and the project got tested with it. Edit and run
-sbt_debug.bat to make remote debugging possible.
+The sbt (http://www.scala-sbt.org/) version 0.12 is used and the project got 
+tested with it. Edit and run sbt_debug.bat to make remote debugging possible.
 In sbt console run 'container:start' (sbt version 0.12) to run the webserver.
+After the start of the container is done without an error, the lift view is 
+available on http://localhost:8080.
