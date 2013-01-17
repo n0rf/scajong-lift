@@ -32,9 +32,8 @@ object LiftViewServer extends LiftActor with ListenerManager with View {
    */
   def createUpdate = update
   
-  
-  override def processNotification(sn:SimpleNotification) {
-    doUpdate(sn)
+  notificationProcessor = {
+    case sn: SimpleNotification => doUpdate(sn)
   }
   
   override def lowPriority = {
